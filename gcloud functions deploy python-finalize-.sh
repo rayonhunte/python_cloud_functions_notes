@@ -114,3 +114,11 @@ https://api-eval.signnow.com/document/{{1234}}/invite \
 "from":"sender@signnow.com",
 "to":"signer.email@signnow.com"
 }'
+
+
+# container build / local run
+ docker build --tag helloworld:python .
+ docker run --rm -p 9090:8080 -e PORT=8080 helloworld:python
+
+ # cloud run deploy
+ gcloud run deploy

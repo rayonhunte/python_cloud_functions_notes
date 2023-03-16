@@ -27,6 +27,7 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
   --runtime python310 \
   --trigger-event "providers/cloud.firestore/eventTypes/document.write" \
   --trigger-resource "projects/gedtsolo/databases/(default)/documents/messages/{pushId}"
+  
 
   gcloud functions deploy signUp \
   --runtime python310 \
@@ -36,7 +37,10 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
   gcloud functions deploy signUp \
   --runtime python310 \
   --trigger-event "providers/cloud.firestore/eventTypes/document.write" \
-  --trigger-resource "projects/gedtsolo/databases/(default)/documents/scores/{pushId}"
+  --trigger-resource "projects/gedtsolo/databases/(default)/documents/scores/{pushId}" \
+  --set-env-vars username=rhunte@theguyanatrust.org,password=Subzero@winter79,token=MGFmMDY0ZTdmNDRhMTllNWNhM2ZkNmJhYjFjMTRiYjg6MzE5YmMzYmI5ZWVlOWNjZjA1NDYxMGViNzlkOTM1NGY=
+
+
 bck-i-search: deploy_
 
 
@@ -61,7 +65,7 @@ bck-i-search: deploy_
     
     # run locally 
     functions-framework --target=scoreParser --signature-type=event --debug --port=5003
-    functions-framework --target=signUp --signature-type=event --debug --port=5003
+    functions-framework --target=signUp --signature-type=event --debug --port=5003 
 
 
 
@@ -119,6 +123,11 @@ https://api-eval.signnow.com/document/{{1234}}/invite \
 # container build / local run
  docker build --tag helloworld:python .
  docker run --rm -p 9090:8080 -e PORT=8080 helloworld:python
+ docker run --rm -p 3001:3001 -e PORT=3001 helloworld:python
 
  # cloud run deploy
  gcloud run deploy
+
+ https://github.com/sekR4/FastAPI-on-Google-Cloud-Run
+
+ 

@@ -1,0 +1,48 @@
+function Parent() {
+  this.name = 'Parent';
+}
+
+Parent.prototype.greet = function () {
+  console.log('Hello from ' + this.name);
+};
+
+const child = Object.create(Parent.prototype);
+
+child.cry = function () {
+  console.log('waaaaaahhhh!');
+};
+
+child.cry();
+// waaaaaahhhh!
+
+child.greet();
+// hello from Parent
+
+child.constructor;
+// ƒ Parent() {
+//   this.name = 'Parent';
+// }
+
+child.constructor.name;
+// 'Parent'
+
+
+
+function Person(name) {
+  this.name = name;
+}
+
+var person = Person('John');
+console.log(person); // undefined
+console.log(person.name); // Uncaught TypeError: Cannot read property 'name' of undefined
+
+var person = new Person('John');
+console.log(person); // Person { name: "John" }
+console.log(person.name); // "john"
+
+fizz buzz 
+for (let i = 1; i <= 100; i++) {
+  let f = i % 3 == 0,
+    b = i % 5 == 0;
+  console.log(f ? (b ? 'FizzBuzz' : 'Fizz') : b ? 'Buzz' : i);
+}

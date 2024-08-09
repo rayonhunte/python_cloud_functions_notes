@@ -26,6 +26,8 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
   --trigger-"bucket=gs://gedtsolo.appspot.com" \
   --allow-unauthenticated \
   --docker-registry=artifact-registry
+
+  
   
   gcloud functions deploy signUp \
   --runtime python310 \
@@ -44,7 +46,7 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
   --trigger-event "providers/cloud.firestore/eventTypes/document.write" \
   --trigger-resource "projects/gedtsolo/databases/(default)/documents/loanTest/{pushId}" \
   --docker-registry=artifact-registry \
-  --set-env-vars username=rhunte@theguyanatrust.org,password=Subzero@winter79,token=MmQwMTcxMTBiOWUzYmEwMDBmNjk2MjM1MTEzMDkwZjc6NTZkNTFhZTE4MTY1YWNlZDY0NWRhMjJmN2Y1N2FjOTA=
+  --set-env-vars username=rhunte@theguyanatrust.org,password=Subzero@winter79,token=MDY3NDNiMTJiNzBiM2U4MWFhMzhhMjk2NWEzYzlhYjg6MzgyMDA1ZjU0ODMzNWJmZjVkYmE5YWUyZDg4MjNhOWI=
 
 
   gcloud functions deploy forward \
@@ -146,6 +148,44 @@ gcloud functions deploy addPayments \
 --memory=256MB
 
 
+gcloud functions deploy process_payment_request_file \
+--gen2 \
+--trigger-event-filters="type=google.cloud.storage.object.v1.finalized" \
+--trigger-event-filters="bucket=gedtsolo.appspot.com" \
+--allow-unauthenticated \
+--trigger-location=us \
+--runtime=python310 \
+--source=. \
+--entry-point=process_payment_request_file \
+--timeout=300 \
+--memory=512MB
+
+# Deploy the Cloud Function Gen 2
+gcloud builds submit --tag gcr.io/gedtsolo/firestore-to-bigquery
+
+gcloud run deploy export-firestore-to-bigquery \
+  --image gcr.io/gedtsolo/firestore-to-bigquery \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-env-vars GOOGLE_APPLICATION_CREDENTIALS=./gedtsolo-firebase-adminsdk-6g2o7-f3acc83579.json
+
+  curl -X POST https://export-firestore-to-bigquery-czi25bfe7a-uc.a.run.app \
+  -H "Content-Type: application/json" \
+  -d '{"collection_name": "nda", "bigquery_path": "gedtsolo.fire_dump.nda"}'
+
+gcloud functions deploy score_parser \
+--gen2 \
+--runtime=python310 \
+--entry-point=score_parser \
+--trigger-event-filters="type=google.cloud.storage.object.v1.finalized" \
+--trigger-event-filters="bucket=gedtsolo.appspot.com\scores" \
+--source=. \
+--allow-unauthenticated \
+--trigger-location=us \
+--timeout=300 \
+--memory=256MB
+
 
 
 bck-i-search: deploy_
@@ -181,6 +221,10 @@ bck-i-search: deploy_
     functions-framework --target=latePayment --signature-type=event --debug --port=5003
     functions-framework --target=headless --signature-type=event --debug --port=5003
     functions-framework --target=addPayments --signature-type=event --debug --port=5003
+
+    functions-framework --target=process_payment_request_file --signature-type=event --debug --port=5003
+
+    functions-framework --target=export_firestore_to_bigquery --signature-type=event --debug --port=5003
 
 
      curl localhost:5003 \
@@ -244,7 +288,7 @@ https://api-eval.signnow.com/document/{{1234}}/invite \
  gcloud run deploy --source .
  gcloud config set run/region us-central1
 
- https://github.com/sekR4/FastAPI-on-Google-Cloud-Run
+ https://github.com/sekR4/FastAPI-on-Google-Cloud-code tempOriginCriterionRun
 
  
 
@@ -253,4 +297,26 @@ https://api-eval.signnow.com/document/{{1234}}/invite \
  
 
 
+export SO_KIT_GL_REGISTRY_URL="registry.gitlab.com"
+export SO_KIT_GL_REGISTRY_TOKEN_NAME="ask-for-token-name"
+export SO_KIT_GL_REGISTRY_TOKEN_VALUE="ask-for-token-value"
 
+docker login $SO_KIT_GL_REGISTRY_URL \
+    -u $SO_KIT_GL_REGISTRY_TOKEN_NAME \
+    --password-stdin<<<$SO_KIT_GL_REGISTRY_TOKEN_VALUE
+
+docker run \
+    -h 127.0.0.1 \
+    -p 7170:7170 \
+    --rm --name tradesphere-ms \
+    registry.gitlab.com/strategyobject/sokit/sokit-registry/tradesphere/tradesphere-ms:1.0.12
+
+docker run \
+    -h 127.0.0.1 \
+    -p 7170:7170 \
+    --rm --name tradesphere-ms \
+    registry.gitlab.com/strategyobject/sokit/sokit-registry/tradesphere/tradesphere-ms:1.0.10
+
+// get task names
+jq '[.[] | select(.["Deliverable name"]=="UPLOAD UPDATED BUDGET FOR RECOVERABLE GRANT FUNDS") | {TaskName: .["Task name"], DeliverableName: .["Deliverable name"]}] | unique_by(.TaskName)' raw_dump.json
+jq '[.[] | select(.["Deliverable name"] | test("^INTERNATIONAL BANK TRANSFER PAYMENT REQUEST.*")) | {TaskName: .["Task name"], DeliverableName: .["Deliverable name"]}] | unique_by(.TaskName)' raw_dump.json
